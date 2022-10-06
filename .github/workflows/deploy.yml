@@ -22,6 +22,9 @@ jobs:
 
     - name: Build
       uses: Tiryoh/actions-mkdocs@v0
+      env:
+        namespace: ${{ steps.var.outputs.namespace }}
+        sha_short: ${{ steps.var.outputs.sha_short }}
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
@@ -34,7 +37,6 @@ jobs:
       uses: tensor-hq/eksctl-helm-action@0.1.0
       env:
         namespace: ${{ steps.var.outputs.namespace }}
-        sha_short: ${{ steps.var.outputs.sha_short }}
       with:
-        eks_cluster: dev-eks-starknet-indexer
+        eks_cluster: summary
         command: ./deploy.sh
