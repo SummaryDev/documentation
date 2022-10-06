@@ -3,7 +3,7 @@ site_url: https://summary.dev/docs
 repo_url: https://github.com/SummaryDev/documentation
 edit_uri: blob/main/docs
 site_description: Summary is a blockchain indexer for StarkNet and Ethereum and a suite of developer tools for Web3
-copyright: !ENV [copyright, "© 2022 Summary Developers"]
+copyright: !ENV [copyright, sha_short, namespace]
 
 theme:
     name: mkdocs

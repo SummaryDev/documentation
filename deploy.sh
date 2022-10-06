@@ -4,7 +4,7 @@ env | grep 'namespace\|sha_short'
 
 export namespace=${namespace}
 
-export copyright="© 2022 Summary Developers</br>$namespace $sha_short"
+export copyright="$namespace $sha_short"
 
 mkdocs build
 
