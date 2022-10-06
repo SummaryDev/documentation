@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{%- block styles %}
+<link href="{{ 'css/bootstrap.min.css'|url }}" rel="stylesheet">
+<link href="{{ 'css/font-awesome.min.css'|url }}" rel="stylesheet">
+<link href="{{ 'css/base.css'|url }}" rel="stylesheet">
+{%- if config.theme.highlightjs %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/{{ config.theme.hljs_style }}.min.css">
+{%- endif %}
+{%- for path in extra_css %}
+<link href="{{ path }}" rel="stylesheet">
+{%- endfor %}
+{%- endblock %}
+
+{% block libs %}
+<script src="{{ 'js/jquery-1.10.2.min.js'|url }}" defer></script>
+<script src="{{ 'js/bootstrap.min.js'|url }}" defer></script>
+{%- if config.theme.highlightjs %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/highlight.min.js"></script>
+{%- for lang in config.theme.hljs_languages %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/languages/{{lang}}.min.js"></script>
+{%- endfor %}
+<script>hljs.initHighlightingOnLoad();</script>
+{%- endif %}
+{% endblock %}
+
+{#
+The entry point for the MkDocs Theme.
+ 
+Any theme customisations should override this file to redefine blocks defined in
+the various templates. The custom theme should only need to define a main.html
+which `{% extends "base.html" %}` and defines various blocks which will replace
+the blocks defined in base.html and its included child templates.
+#}
