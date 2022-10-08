@@ -1,6 +1,6 @@
 # Documentation
 
-Documentation for Summary.dev blockchain indexer.
+Documentation for [Summary](https://summary.dev) blockchain indexer.
 
 Install mkdocs from https://www.mkdocs.org/user-guide/installation.
 
