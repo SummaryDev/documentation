@@ -8,7 +8,7 @@ Summary is a suite of tools that let Web3 developers:
 - store data for decentralized applications
 
 **Summary Blockchain Indexer** gathers blockchain data, decodes,
-persists and makes it available for analysis by GraphQL, SQL, and API
+persists and makes it available for analysis by GraphQL, SQL and API
 queries.
 
 We started with [StarkNet](https://starknet.io/what-is-starknet/) L2
@@ -21,10 +21,10 @@ You can query the data via GraphQL and SQL in our
 
 ## Quick start 
 
-[Developer console](../../console) is open to query blockchain data for 
+[Developer console](../../console) is open to query blockchain data for
 events, transactions and their inputs, as well as to
 [filter](queries.md#filter), aggregate and
-[sum up](queries.md#aggregations) values.
+[sum up](queries.md#aggregation) values.
 
 ![Screenshot-graphiql](img/Screenshot-graphiql.png "GraphQL console")
 

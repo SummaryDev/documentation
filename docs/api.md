@@ -26,7 +26,7 @@ curl https://hasura.prod.summary.dev/v1/graphql --data-raw '{"query":"{starknet_
 
 To get notified of changes to your query results use GraphQL
 [subscriptions](subscriptions.md) feature. It lets you connect via a
-WebSocket, pass your query as a *subscription* and your client gets
+WebSocket, pass your query as a *subscription* and your client will get
 called back once the results change. Use your favorite WebSocket or
 GraphQL client or our sample
 [subscriber](https://github.com/SummaryDev/subscriber) as a starting

@@ -12,11 +12,10 @@ developer can craft a GraphQL query in the [web console](../../console)
 and once it's perfected can send the same query to our http
 [API](api.md) endpoint.
 
-Queries with [SQL](sql.md) can be more sophisticated and used for
+Queries with [SQL](sql.md) can be more sophisticated and are used for
 grouping and joining records which would not be possible with GraphQL.
 These queries can then be wrapped into GraphQL by making them into
-persistent queries; more on this in another section on
-[views](sql.md#views).
+persistent queries as [views](sql.md#views).
 
 Let's look at the basics of GraphQL queries for blockchain data. 
 
@@ -34,6 +33,8 @@ Smart contracts emit events with some payload that we parse into
 `arguments`, so select these in the tree together with their fields
 `value` and others.
 
+![Screenshot-explorer.png](img/Screenshot-explorer.png "GraphQL explorer")
+
 ## Filter
 
 There are millions of events in the database and you don't want to
@@ -46,6 +47,8 @@ filter and `limit` conditions:
 - event `name` field is equal `_eq` to `Mint`
 - smart contract address that emitted the event `_eq` to `0x4b0...`
 - `limit` results to 3.
+
+![Screenshot-explorer-filter.png](img/Screenshot-explorer-filter.png "GraphQL filter")
 
 One of the features of GraphQL is the ability to combine many entities
 in one query. To illustrate it here let's add a query for all `DEPLOY`

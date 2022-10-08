@@ -22,27 +22,6 @@ arise which GraphQL cannot handle and we'll have to switch to SQL.
 The following two queries fetch payload arguments named `amount0` of
 event `Mint` of contract `0x4b05...`.
 
-```sql
-select
-  a.name,
-  a.type,
-  a.value,
-  a.decimal,
-  b.block_number
-from starknet_goerli.argument a
-  left join starknet_goerli.event e on a.event_id = e.id
-  left join starknet_goerli.transaction t on e.transaction_hash = t.transaction_hash
-  left join starknet_goerli.block b on t.block_number = b.block_number
-where e.transmitter_contract = '0x4b05cce270364e2e4bf65bde3e9429b50c97ea3443b133442f838045f41e733'
-      and e.name = 'Mint'
-      and a.name = 'amount0'
-order by b.block_number desc
-limit 10;
-```
-
-The SQL query is as concise as GraphQL except perhaps for the verbose
-`join`s.
-
 ```graphql
 {
   starknet_goerli_argument(
@@ -69,6 +48,27 @@ The SQL query is as concise as GraphQL except perhaps for the verbose
     decimal
   }
 }
+```
+
+The SQL query is as concise as GraphQL except perhaps for the verbose
+`join`s.
+
+```sql
+select
+  a.name,
+  a.type,
+  a.value,
+  a.decimal,
+  b.block_number
+from starknet_goerli.argument a
+  left join starknet_goerli.event e on a.event_id = e.id
+  left join starknet_goerli.transaction t on e.transaction_hash = t.transaction_hash
+  left join starknet_goerli.block b on t.block_number = b.block_number
+where e.transmitter_contract = '0x4b05cce270364e2e4bf65bde3e9429b50c97ea3443b133442f838045f41e733'
+      and e.name = 'Mint'
+      and a.name = 'amount0'
+order by b.block_number desc
+limit 10;
 ```
 
 Open the SQL editor in the [web console](../../console) to try the
