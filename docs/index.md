@@ -1,51 +1,51 @@
-# Starknet Indexer
+# Summary Blockchain Indexer</br> and Web3 Tools
 
-**Starknet Indexer** and **starknet-archive** are working titles for the
-software that gathers blockchain data, decodes, persists and makes it
-available for analysis with SQL, GraphQL and http queries.
+Summary is a suite of tools that let Web3 developers:
 
-* [Approach: write once](#approach--write-once)
-* [Preview and road map](#preview-and-road-map)
-* [Quick start](#quick-start)
-* [Input and event data decoded as per contract ABI](#input-and-event-data-decoded-as-per-contract-abi)
-* [Query with http calls](#query-with-http-calls)
-* [Query for your contract's events](#query-for-your-contract-s-events)
-* [Query for values in JSON payloads](#query-for-values-in-json-payloads)
-* [Handling proxy contracts](#handling-proxy-contracts)
-* [Aggregation queries](#aggregation-queries)
-* [Complex queries from database views](#complex-queries-from-database-views)
+- analyze blockchain data
+- automate workflows with smart contract events
+- create charts and dashboards
+- store data for decentralized applications
 
-## Approach: write once 
+**Summary Blockchain Indexer** gathers blockchain data, decodes,
+persists and makes it available for analysis by GraphQL, SQL, and API
+queries.
 
-We aim to solve the problem most DApp developers face: the data their
-smart contracts produce is buried in transaction inputs and events
-scattered in blocks. These data need to be gathered, parsed and
-interpreted for analysis (think an up-to-date TVL) and, finally,
-presented to the end users.
+We started with [StarkNet](https://starknet.io/what-is-starknet/) L2
+network and have its data indexed from both the main and test chains.
+The data is synced up to the latest block available from the network's
+API.
 
-This problem is often solved by an **indexer**, a service that listens
-to blockchain events, decodes and persists the emitted data. The code to
-interpret events is usually written by the DApp developers themselves
-and run by third parties, sometimes in a decentralized manner.
+You can query the data via GraphQL and SQL in our
+[web console](../../console).
 
-While this multi-step approach gets the job done, it requires
-development effort better spent on the DApp itself, and creates friction
-between the many parts of the process.
+## Quick start 
 
-Our approach is a centralised service offering already **decoded and
-normalized data** ready for consumption and interpretation. We run one
-process to gather data from blockchains, decode it and persist in a
-relational database; there is no other secondary indexing or parsing.
-Once in the database, the data are already indexed and available for
-querying with SQL and GraphQL. Developers can use the up-to-date data 
-right away without the need to write extra code, run multiple processes
-or involve third party indexers.
+[Developer console](../../console) is open to query blockchain data for 
+events, transactions and their inputs, as well as to
+[filter](queries.md#filter), aggregate and
+[sum up](queries.md#aggregations) values.
 
-## Preview and road map
+![Screenshot-graphiql](img/Screenshot-graphiql.png "GraphQL console")
 
-We invite you to a sneak preview of our indexing service available in a
-GraphQL query console at
-[http://starknetindex.com/console](http://starknetindex.com/console).
+Try this sample **GraphQL** in the middle pane editor. It queries for
+the latest block numbers and their hashes in both StarkNet chains
+*mainnet* and *goerli*.
 
-Please see below example queries demonstrating its basic
-capabilities.
+```graphql
+query latest_blocks {
+    starknet_goerli_block(limit: 1, order_by: {block_number: desc}) {block_number block_hash} 
+    starknet_mainnet_block(limit: 1, order_by: {block_number: desc}) {block_number block_hash}
+}
+```
+
+Now open the **SQL** console and try this select to query for the last
+10 events emitted by StarkNet smart contracts in the test chain
+goerli.
+
+```sql
+select * from starknet_goerli.event 
+left join starknet_goerli.argument on starknet_goerli.argument.event_id = starknet_goerli.event.id 
+order by starknet_goerli.event.id desc limit 10
+```
+

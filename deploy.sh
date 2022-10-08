@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-env | grep 'namespace\|sha_short'
+export namespace=${namespace-dev}
 
-export namespace=${namespace}
+env | grep 'namespace\|sha_short'
 
 export copyright="$namespace $sha_short"
 

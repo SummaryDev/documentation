@@ -1,4 +1,4 @@
-site_name: summary.dev
+site_name: Summary
 site_url: https://summary.dev/docs
 repo_url: https://github.com/SummaryDev/documentation
 edit_uri: blob/main/docs
@@ -14,7 +14,9 @@ theme:
 
 nav:
     - Home: index.md
-    - Quick Start: quickstart.md
     - Queries: queries.md
     - SQL: sql.md
     - Subscriptions: subscriptions.md
+    - API: api.md
+    - How it works: howitworks.md
+    - Console: https://summary.dev/console

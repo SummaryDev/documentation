@@ -1,17 +1,115 @@
 # Query blockchain data with GraphQL
 
-## Input and event data decoded as per contract ABI
+We store blockchain data decoded and normalized in tables in a
+relational database. Then make this data available for querying by
+GraphQL and SQL. 
 
-Blockchain APIs return transaction inputs and events in bulk arrays of
-binary data which are hard to interpret. We decode these for you using
-appropriate ABIs; special care is taken for proxy contracts (more on
-this below).
+**GraphQL** lets you combine queries and retrieve records related and
+not, all by one query, saving you round trips getting them piece by
+piece like in REST APIs. It is also easier to construct than SQL and
+lends itself well to be used in API calls as it returns json. A
+developer can craft a GraphQL query in the [web console](../../console)
+and once it's perfected can send the same query to our http
+[API](api.md) endpoint.
+
+Queries with [SQL](sql.md) can be more sophisticated and used for
+grouping and joining records which would not be possible with GraphQL.
+These queries can then be wrapped into GraphQL by making them into
+persistent queries; more on this in another section on
+[views](sql.md#views).
+
+Let's look at the basics of GraphQL queries for blockchain data. 
+
+## Explorer
+
+While you can write queries by hand you may find the GraphQL schema
+**Explorer** useful in the beginning. Open the pane on the left to put
+together a GraphQL query by selecting entities to return with their
+fields, and by adding filter, limit and sort parameters.
+
+Navigate to find entities you're interested in, like *events* in 
+StarkNet test chain *goerli*. Open node `starknet_goerli_event` in the
+Explorer's tree and select the fields you want to retrieve like `name`.
+Smart contracts emit events with some payload that we parse into
+`arguments`, so select these in the tree together with their fields
+`value` and others.
+
+## Filter
+
+There are millions of events in the database and you don't want to
+retrieve all of them, so let's narrow down the search by adding *where*
+clause filters and *limit* the number of records returned.
+
+Open the `where` node in the tree under `starknet_goerli_event` to add
+filter and `limit` conditions:
+
+- event `name` field is equal `_eq` to `Mint`
+- smart contract address that emitted the event `_eq` to `0x4b0...`
+- `limit` results to 3.
+
+One of the features of GraphQL is the ability to combine many entities
+in one query. To illustrate it here let's add a query for all `DEPLOY`
+transactions in block 100000, together with their inputs. Note here that
+you can filter entities at all levels: the block by its `block_number`
+and transactions within the block by their `type`.
+
+If you paste this query into the middle editor pane it will open the
+corresponding nodes in the Explorer: the panes work nicely together.
+
+```graphql
+{
+  starknet_goerli_event(where: {
+    name: {_eq: "Mint"}, 
+    transmitter_contract: {_eq: "0x4b05cce270364e2e4bf65bde3e9429b50c97ea3443b133442f838045f41e733"}
+    }, 
+    limit: 3) {
+    name
+    arguments {
+      name
+      type
+      value
+      decimal
+    }
+    transaction_hash
+  }
+  starknet_goerli_block(where: {
+    block_number: {_eq: 100000}}) {
+    transactions(where: {type: {_eq: "DEPLOY"}}) {
+      function
+      entry_point_selector
+      inputs {
+        name
+        type
+        value
+      }
+    }
+  }
+}
+```
+
+You can get query results directly from our http endpoint. Send the
+query you tried in the web console as an http POST parameter with
+`curl`:
+```bash
+curl https://hasura.prod.summary.dev/v1/graphql --data-raw '{"query":"{starknet_goerli_event(where: {name: {_eq: \"Mint\"}, transmitter_contract: {_eq: \"0x4b05cce270364e2e4bf65bde3e9429b50c97ea3443b133442f838045f41e733\"}}, limit: 3) { name arguments { name type value decimal } transaction_hash} starknet_goerli_block(where: {block_number: {_eq: 100000}}) {transactions(where: {type: {_eq: \"DEPLOY\"}}) {function entry_point_selector inputs {name type value}}}}"}'
+```
+
+More on this in the section on our [API](api.md).
+
+## Input and event data decoded with ABI
+
+Blockchain APIs return transaction inputs and event payload in bulk
+arrays of binary data which are hard to interpret. We decode these for
+you with smart contract ABIs. For [proxy contracts](#proxy-contracts) we
+attempt to find the implementation contract's ABI to parse the data
+correctly.
 
 Take a look at the transactions and events of block 100000 parsed and
 decoded. Try this query (which omits most fields for brevity).
+
 ```graphql
 {
-  block(where: {block_number: {_eq: 100000}}) {
+  starknet_goerli_block(where: {block_number: {_eq: 100000}}) {
     transactions {
       function
       entry_point_selector
@@ -36,8 +134,10 @@ decoded. Try this query (which omits most fields for brevity).
 ```
 
 Transaction function and its inputs are decoded using the contract's
-ABI. See the function name `execute` and inputs: `to` as `felt`,
-`calldata` as a three element `felt` array.
+ABI. See smart contract function name decoded as `execute` together with
+its inputs: `to` as type `felt`, `calldata` as a three element `felt`
+array.
+
 ```json
 {
 "function": "execute",
@@ -73,7 +173,9 @@ ABI. See the function name `execute` and inputs: `to` as `felt`,
 
 Events are also decoded: see `Transfer` event and its argument `tokenId`
 as struct `Uint256` with `low` and `high` hex, also converted into a
-decimal number.
+decimal number. Converting from felt and Uint256 into decimal is useful
+for summing up and comparing values.
+
 ```json
 {
 "events": [
@@ -108,19 +210,22 @@ decimal number.
 }
 ```
 
-Let's get the raw undecoded block for comparison. This query may be
-familiar to you as a common call to a blockchain API. Paste this into
-the GraphQL query window -- you'll see block 100000 as we received it
-from the API, with its transactions and events.
+Let's get the raw block for comparison. Paste this into the GraphQL
+query window and you'll see `raw` block 100000 as we received it from
+the blockchain node API, with its transaction `calldata` and event
+payload `data` undecoded.
+
 ```graphql
 {
-  raw_block_by_pk(block_number: 100000) {
+  starknet_goerli_raw_block_by_pk(block_number: 100000) {
     raw
   }
 }
 ```
 
-The raw block has transaction inputs as `calldata` in a bulk array.
+The raw block has transaction inputs as `calldata` in a bulk array, like
+in this excerpt.
+
 ```json
 {
 "type": "INVOKE_FUNCTION",
@@ -138,6 +243,7 @@ The raw block has transaction inputs as `calldata` in a bulk array.
 ```
 
 Event payload `data` is in bulk as well. 
+
 ```json
 {
 "events": [
@@ -157,33 +263,20 @@ Event payload `data` is in bulk as well.
 }
 ```
 
-## Query with http calls
-
-While GraphQL web IDE is useful to explore blockchain data, can you
-build analytics tools with these queries? Yes, cause you can send your
-GraphQL queries to our http endpoint and consume query results by your
-applications and front ends.
-
-Your development process may start with you designing queries in the
-GraphQL console, combining and refining them. Once you figured out how
-to collect all the data you need, you can incorporate these query calls
-into your DApp frontend.
-
-Try this http call with queries for both the decoded and the raw block 100000.
-```bash
-curl https://starknet-archive.hasura.app/v1/graphql --data-raw '{"query":"{ block(where: {block_number: {_eq: 100000}}) { transactions { function entry_point_selector inputs { name type value } events { name transmitter_contract arguments { name type value decimal } } } } raw_block_by_pk(block_number: 100000) { raw }}"}'
-```
-
 ## Query for your contract's events
 
 You are probably interested not in whole blocks but in events emitted by
-your own contract. Let's narrow down with this query for `Mint` events
-of contract
-`0x4b05cce270364e2e4bf65bde3e9429b50c97ea3443b133442f838045f41e733`,
-limited to one result for brevity.
+your own contract. Let's see how we can search with this query for
+`Mint` events of contract `0x4b0...`, limited to one result for brevity.
+
 ```graphql
 {
-  event(where: {name: {_eq: "Mint"}, transmitter_contract: {_eq: "0x4b05cce270364e2e4bf65bde3e9429b50c97ea3443b133442f838045f41e733"}}, limit: 1) {
+  starknet_goerli_event(where: 
+    {
+        name: {_eq: "Mint"}, 
+        transmitter_contract: {_eq: "0x4b05cce270364e2e4bf65bde3e9429b50c97ea3443b133442f838045f41e733"}
+    }, 
+    limit: 1) {
     name
     arguments {
       name
@@ -196,7 +289,8 @@ limited to one result for brevity.
 }
 ```
 
-The query returns your event decoded.
+The query returns your event with its payload *arguments* decoded.
+
 ```json
 {
   "data": {
@@ -236,19 +330,33 @@ The query returns your event decoded.
 }
 ```
 
-Request all `Mint` events with this http call.
+You can send the same query to the http API endpoint; here we omitted
+the `limit` to get all `Mint` events. Such queries can be automated and 
+feed your web and backend applications.
+
 ```bash
-curl https://starknet-archive.hasura.app/v1/graphql --data-raw '{"query":"query { event(where: {name: {_eq: \"Mint\"}, transmitter_contract: {_eq: \"0x4b05cce270364e2e4bf65bde3e9429b50c97ea3443b133442f838045f41e733\"}}) { name arguments { name type value decimal } transaction_hash }}"}'
+curl https://hasura.prod.summary.dev/v1/graphql --data-raw '{"query":"query { starknet_goerli_event(where: {name: {_eq: \"Mint\"}, transmitter_contract: {_eq: \"0x4b05cce270364e2e4bf65bde3e9429b50c97ea3443b133442f838045f41e733\"}}) { name arguments { name type value decimal } transaction_hash }}"}'
 ```
 
-Obviously, you can add many conditions to the `where` clause selecting
-your events. 
+Naturally, you can add as many conditions to `where` clause as
+needed to select the events you're interested in.
 
-This query returns all `Mint` event whose `amount1` values are less than
-10.
+This query returns 10 `Mint` events as `starknet_goerli_event` entities
+which have `arguments` with `amount1` values less than 10. See the
+`where` clause selecting events with payload `arguments` with name `_eq`
+to `amount1` and its value in decimal less than `_lt` 10.
+
 ```graphql
 query event_mint_argument_amount1_lte_10 {
-  event(where: {arguments: {name: {_eq: "amount1"}, decimal: {_lt: "10"}}, name: {_eq: "Mint"}, transmitter_contract: {_eq: "0x4b05cce270364e2e4bf65bde3e9429b50c97ea3443b133442f838045f41e733"}}) {
+  starknet_goerli_event(where: {
+      arguments: {
+        name: {_eq: "amount1"}, 
+        decimal: {_lt: "10"}
+      }, 
+      name: {_eq: "Mint"}, 
+      transmitter_contract: {_eq: "0x4b05cce270364e2e4bf65bde3e9429b50c97ea3443b133442f838045f41e733"}
+    },
+    limit: 10) {
     name
     arguments {
       name
@@ -261,13 +369,20 @@ query event_mint_argument_amount1_lte_10 {
 }
 ```
 
-This query accomplishes the same, but from the other end: it requests
-all arguments satisfying the conditions `amount1` and `< 10` whose event
-is `Mint`, and returns the results together with their event,
-transaction and its block number. 
+The following query accomplishes the same, but from the other end: it
+requests all arguments as `starknet_goerli_argument` entities,
+satisfying conditions `amount1` and `< 10`, and whose owning event is
+`Mint` of contract `0x4b0...`. The query returns results as arguments
+together with their event, transaction and its block number.
+
 ```graphql
 query argument_amount1_lte_10_event_mint {
-  argument(where: {decimal: {_lt: "10"}, name: {_eq: "amount1"}, event: {name: {_eq: "Mint"}, transmitter_contract: {_eq: "0x4b05cce270364e2e4bf65bde3e9429b50c97ea3443b133442f838045f41e733"}}}) {
+  starknet_goerli_argument(where: {
+      decimal: {_lt: "10"}, 
+      name: {_eq: "amount1"}, 
+      event: {name: {_eq: "Mint"}, transmitter_contract: {_eq: "0x4b05cce270364e2e4bf65bde3e9429b50c97ea3443b133442f838045f41e733"}}
+    },
+    limit: 10) {
     decimal
     name
     type
@@ -282,13 +397,17 @@ query argument_amount1_lte_10_event_mint {
 }
 ```
 
-Another example query requests all `Transfer` events with a given
-destination address specified by the `to` event argument. Note these
-events come from various contracts as seen in different
-`transmitter_contract` fields, so you can narrow down further if needed.
+Another example query requests 10 `Transfer` events with a given
+destination address `0x455...` specified by the `to` event argument.
+Note these events come from various contracts as seen in different
+`transmitter_contract` fields, and you can narrow down further if
+needed.
+
 ```graphql
 query event_transfer_to {
-  event(where: {name: {_eq: "Transfer"}, arguments: {name: {_eq: "to"}, value: {_eq: "0x455eb02b7080a4ad5d2161cb94928acec81a4c9037b40bf106c4c797533c3e5"}}}) {
+  starknet_goerli_event(where: {name: {_eq: "Transfer"}, 
+    arguments: {name: {_eq: "to"}, value: {_eq: "0x455eb02b7080a4ad5d2161cb94928acec81a4c9037b40bf106c4c797533c3e5"}}}
+    limit: 10) {
     name
     arguments {
       name
@@ -304,23 +423,29 @@ query event_transfer_to {
 
 ## Query for values in JSON payloads
 
-Some data fields are atomic of type `felt` and are easily accessible by
-queries, but some are members of structs and are stored in json values.
+Some event and transaction payload fields are atomic of type `felt` and
+are easily accessible by queries, but some are members of *structs* and
+are stored as json values.
 
 If the data you're interested in lies in a field inside json, you can
 get to it by specifying a path to this field in your query.
 
-Query for this transaction input `index_and_x` defined as a struct.
+This query searches for smart contract function input `index_and_x` of
+contract `0x579...` which is defined as a struct.
+
 ```graphql
 {
-  input(where: {name: {_eq: "index_and_x"}, transaction: {contract_address: {_eq: "0x579f32b8090d8d789d4b907a8935a75f6de583c9d60893586e24a83d173b6d5"}}}, limit: 1) {
+  starknet_goerli_input(where: {name: {_eq: "index_and_x"}, 
+    transaction: {contract_address: {_eq: "0x579f32b8090d8d789d4b907a8935a75f6de583c9d60893586e24a83d173b6d5"}}}, 
+    limit: 1) {
     value
   }
 }
 ```
 
-Returns a value of `index_and_x` in a json payload with fields `index` 
-and `values`.
+The result is the value of `index_and_x` as json with fields `index` and
+`values`.
+
 ```json
 {
   "data": {
@@ -339,17 +464,21 @@ and `values`.
 }
 ```
 
-This query digs into json by specifying the path to the second half of
-the tuple stored in the `values` field.
+The following query digs into json by specifying path `values[1]` to the
+second half of the tuple named `values`. Note the path is not part of
+the where clause but is applied to the returned field directly.
+
 ```graphql
 {
-  input(where: {name: {_eq: "index_and_x"}, transaction: {contract_address: {_eq: "0x579f32b8090d8d789d4b907a8935a75f6de583c9d60893586e24a83d173b6d5"}}}, limit: 1) {
+  starknet_goerli_input(where: {name: {_eq: "index_and_x"}, 
+    transaction: {contract_address: {_eq: "0x579f32b8090d8d789d4b907a8935a75f6de583c9d60893586e24a83d173b6d5"}}}, limit: 1) {
     value(path: "values[1]")
   }
 }
 ```
 
-Returns bare `y` values of `index_and_x`.
+And returns bare `y` values of `index_and_x`:
+
 ```json
 {
   "data": {
@@ -362,10 +491,11 @@ Returns bare `y` values of `index_and_x`.
 }
 ```
 
-For illustration, try this query to see our contract's ABI.
+Let's see what the ABI of our contract `0x579...` looks like.
+
 ```graphql
 {
-  raw_abi_by_pk(contract_address: "0x579f32b8090d8d789d4b907a8935a75f6de583c9d60893586e24a83d173b6d5") {
+  starknet_goerli_raw_abi_by_pk(contract_address: "0x579f32b8090d8d789d4b907a8935a75f6de583c9d60893586e24a83d173b6d5") {
     raw(path: "[0]")
   }
 }
@@ -373,7 +503,8 @@ For illustration, try this query to see our contract's ABI.
 
 The type of `index_and_x` input is struct `IndexAndValues`. See its
 definition in the ABI that shows how to get the second half of the tuple
-`values(x : felt, y : felt)` by `path: "values[1]"`
+`values(x : felt, y : felt)` by `path: "values[1]"`.
+
 ```json
 {
   "data": {
@@ -400,25 +531,29 @@ definition in the ABI that shows how to get the second half of the tuple
 }
 ```
 
-## Handling proxy contracts
+## Proxy contracts
 
 Proxy contracts delegate transaction function calls to implementation
 contracts. Transaction input and event data are encoded per
-implementation contract's ABI. Implementation contracts change and so do
-their ABIs. While interpreting proxy contract calls may be challenging,
-the data can still be decoded, by finding the implementation contract
-and its ABI.
+implementation contract's ABI. Implementation contracts change and with
+them changes the proxy contract's ABI. 
+
+While interpreting proxy contract calls may be challenging, the data can
+still be decoded, by finding the implementation contract and its ABI.
+This is done by calling `get_implementation` or a similar method of the
+proxy contract, or by looking at the latest `Upgraded` or similarly
+named event indicating the implementation changed.
 
 This query requests three transactions sent to a proxy contract
-`0x47495c732aa419dfecb43a2a78b4df926fddb251c7de0e88eab90d8a0399cd8`. You
-see the first `DEPLOY` transaction setting the implementation contract
-address to
-`0x90aa7a9203bff78bfb24f0753c180a33d4bad95b1f4f510b36b00993815704`.
-Let's add to the query a call to `raw_abi` to get ABIs for both proxy
+`0x474...`. You see the first `DEPLOY` transaction setting the
+implementation contract address to `0x90a...`. 
+
+Let's add to the query a call to `raw_abi` to get ABIs for both proxy 
 and implementation contracts, for demonstration.
+
 ```graphql
 {
-  transaction(limit: 3, where: {contract_address: {_eq: "0x47495c732aa419dfecb43a2a78b4df926fddb251c7de0e88eab90d8a0399cd8"}}) {
+  starknet_goerli_transaction(limit: 3, where: {contract_address: {_eq: "0x47495c732aa419dfecb43a2a78b4df926fddb251c7de0e88eab90d8a0399cd8"}}) {
     inputs {
       type
       value
@@ -426,15 +561,16 @@ and implementation contracts, for demonstration.
     }
     function
   }
-  raw_abi(where: {contract_address: {_in: ["0x47495c732aa419dfecb43a2a78b4df926fddb251c7de0e88eab90d8a0399cd8", "0x90aa7a9203bff78bfb24f0753c180a33d4bad95b1f4f510b36b00993815704"]}}) {
+  starknet_goerli_raw_abi(where: {contract_address: {_in: ["0x47495c732aa419dfecb43a2a78b4df926fddb251c7de0e88eab90d8a0399cd8", "0x90aa7a9203bff78bfb24f0753c180a33d4bad95b1f4f510b36b00993815704"]}}) {
     contract_address
     raw
   }
 }
 ```
 
-See that the input `call_array` of type `CallArray` is defined in the
-implementation, not the proxy contract's ABI.
+See the contract function input `call_array` of type `CallArray` is
+defined in the implementation, not the proxy contract's ABI.
+
 ```json
 {
 "contract_address": "0x90aa7a9203bff78bfb24f0753c180a33d4bad95b1f4f510b36b00993815704",
@@ -470,8 +606,9 @@ implementation, not the proxy contract's ABI.
 }
 ```
 
-Yet `call_array` is still decoded properly as `__execute__` function's 
-input.
+Yet `call_array` is still decoded properly as `__execute__` function's
+input. See this excerpt from the query result:
+
 ```json
 {
 "inputs": [
@@ -506,17 +643,25 @@ input.
 }
 ```
 
-## Aggregation queries
+## Aggregation
 
-You know how to query for all your inputs and events, but how do you
-interpret them? Let's say you want to derive a number from some of your
-events, for example, to calculate Total Value Locked, which is a sum of
-arguments `amount0` of all `Mint` events.
+By now you know how to query for all your inputs and events, but how do
+you interpret them: sum them up, compare or calculate? 
 
-One approach is to query for all of the values of `amount0`.
+Let's say you want to derive a number from some of your events, for example, to
+calculate Total Value Locked, which is a sum of arguments `amount0` of
+all `Mint` events.
+
+One approach is to query for all of the values of `amount0`; here we
+limit results to 10 for brevity.
+
 ```graphql
 {
-  argument(where: {name: {_eq: "amount0"}, event: {name: {_eq: "Mint"}, transmitter_contract: {_eq: "0x4b05cce270364e2e4bf65bde3e9429b50c97ea3443b133442f838045f41e733"}}}, limit: 10) {
+  starknet_goerli_argument(where: {
+      name: {_eq: "amount0"}, 
+      event: {name: {_eq: "Mint"}, transmitter_contract: {_eq: "0x4b05cce270364e2e4bf65bde3e9429b50c97ea3443b133442f838045f41e733"}}
+    }, 
+    limit: 10) {
     type
     value
     name
@@ -525,8 +670,9 @@ One approach is to query for all of the values of `amount0`.
 }
 ```
 
-See the values as `Uint256` struct and also conveniently converted into 
-decimals.
+See the values as `Uint256` struct and also conveniently converted into
+decimals so you can sum them up.
+
 ```json
 {
     "type": "Uint256",
@@ -539,24 +685,29 @@ decimals.
 }
 ```
 
-You would consume this query's results by your software and sum up the
-values of `amount0`, like some other indexers let you do. 
+You can consume this query's results by your own software and sum up the
+values of `amount0`. This is the approach of some other indexers.
 
-But since your data are already in a relational database's table, you
-can run an **aggregation** query over the values, which sums them up and
-returns the final result, without much effort.
+But since your data is already in a relational database's table, you can
+run an **aggregation** query over the values, which sums them up and
+returns the final result in the same query, all with no extra coding 
+effort.
 
 That's why the values were converted into decimals when they were
 persisted: GraphQL query `argument_aggregate` calls a SQL query with an
 aggregation function `sum` over a numeric column. Database type `numeric
 78` used for the `decimal` column is large enough to support Uint256 and
-arithmetic operations with it.
+felt and arithmetic operations over them.
 
 This query aggregates decimal values of `amount0` arguments of all 
 `Mint` events.
+
 ```graphql
 {
-  argument_aggregate(where: {name: {_eq: "amount0"}, event: {name: {_eq: "Mint"}, transmitter_contract: {_eq: "0x4b05cce270364e2e4bf65bde3e9429b50c97ea3443b133442f838045f41e733"}}}) {
+  starknet_goerli_argument_aggregate(where: {
+      name: {_eq: "amount0"}, 
+      event: {name: {_eq: "Mint"}, transmitter_contract: {_eq: "0x4b05cce270364e2e4bf65bde3e9429b50c97ea3443b133442f838045f41e733"}}
+    }) {
     aggregate {
       sum {
         decimal
@@ -577,6 +728,7 @@ This query aggregates decimal values of `amount0` arguments of all
 
 Returns the total sum (TVL) as well as results of other aggregation 
 functions: min, max, avg.
+
 ```json
 {
   "data": {
