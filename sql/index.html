@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        <link rel="canonical" href="https://summary.dev/docs/sql/">
+        <link rel="shortcut icon" href="../img/favicon.ico">
+        <title>SQL - Summary</title>
+<link href="../css/bootstrap.min.css" rel="stylesheet">
+<link href="../css/font-awesome.min.css" rel="stylesheet">
+<link href="../css/base.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/github.min.css">
+<script src="../js/jquery-1.10.2.min.js" defer></script>
+<script src="../js/bootstrap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/languages/graphql.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+ 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="..">Summary</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbar-collapse">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="navitem">
+                                <a href=".." class="nav-link">Home</a>
+                            </li>
+                            <li class="navitem">
+                                <a href="../queries/" class="nav-link">Queries</a>
+                            </li>
+                            <li class="navitem active">
+                                <a href="./" class="nav-link">SQL</a>
+                            </li>
+                            <li class="navitem">
+                                <a href="../subscriptions/" class="nav-link">Subscriptions</a>
+                            </li>
+                            <li class="navitem">
+                                <a href="../api/" class="nav-link">API</a>
+                            </li>
+                            <li class="navitem">
+                                <a href="../howitworks/" class="nav-link">How it works</a>
+                            </li>
+                            <li class="navitem">
+                                <a href="https://summary.dev/console" class="nav-link">Console</a>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ml-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-toggle="modal" data-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../queries/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../subscriptions/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="https://github.com/SummaryDev/documentation/blob/main/docs/sql.md" class="nav-link"><i class="fa fa-github"></i> Edit on GitHub</a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-light navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-toggle="collapse" data-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-secondary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-level="1"><a href="#query-blockchain-data-with-sql" class="nav-link">Query blockchain data with SQL</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-level="2"><a href="#compare-to-graphql" class="nav-link">Compare to GraphQL</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#views" class="nav-link">Views</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#examples" class="nav-link">Examples</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="query-blockchain-data-with-sql">Query blockchain data with SQL</h1>
+<p>Blockchain data we collect and index is stored in a relational database
+so it is natural to provide access to it with its native query language
+<strong>SQL</strong>.</p>
+<h2 id="compare-to-graphql">Compare to GraphQL</h2>
+<p>We find GraphQL well suited for data exploration, API access and some
+analysis. GraphQL works well for queries fetching blockchain data with
+any level of detail, and it lets you join and
+<a href="../queries/#filter">filter</a> entities. You can use it to sum up values
+for analysis with <a href="../queries/#aggregation">aggregation</a> queries. For the
+majority of use cases in can replace SQL.</p>
+<p>Let's go through some queries and compare their implementation in both
+GraphQL and SQL. We'll see they're equivalent until more complex cases
+arise which GraphQL cannot handle and we'll have to switch to SQL.</p>
+<h3 id="selects">Selects</h3>
+<p>The following two queries fetch payload arguments named <code>amount0</code> of
+event <code>Mint</code> of contract <code>0x4b05...</code>.</p>
+<pre><code class="language-graphql">{
+  starknet_goerli_argument(
+    where: {
+      event: {
+        transmitter_contract: {_eq: &quot;0x4b05cce270364e2e4bf65bde3e9429b50c97ea3443b133442f838045f41e733&quot;}, 
+        name: {_eq: &quot;Mint&quot;}
+      }, 
+      name: {_eq: &quot;amount0&quot;}
+    }
+    order_by: {event: {transaction: {block: {block_number: desc}}}}
+    limit: 10
+  ) {
+    event {
+      transaction {
+        block {
+          block_number
+        }
+      }
+    }
+    name
+    type
+    value
+    decimal
+  }
+}
+</code></pre>
+<p>The SQL query is as concise as GraphQL except perhaps for the verbose
+<code>join</code>s.</p>
+<pre><code class="language-sql">select
+  a.name,
+  a.type,
+  a.value,
+  a.decimal,
+  b.block_number
+from starknet_goerli.argument a
+  left join starknet_goerli.event e on a.event_id = e.id
+  left join starknet_goerli.transaction t on e.transaction_hash = t.transaction_hash
+  left join starknet_goerli.block b on t.block_number = b.block_number
+where e.transmitter_contract = '0x4b05cce270364e2e4bf65bde3e9429b50c97ea3443b133442f838045f41e733'
+      and e.name = 'Mint'
+      and a.name = 'amount0'
+order by b.block_number desc
+limit 10;
+</code></pre>
+<p>Open the SQL editor in the <a href="../../console">web console</a> to try the
+query.</p>
+<p><img alt="Screenshot-sql-select-argument" src="../img/Screenshot-sql-select-argument.png" title="SQL editor" /></p>
+<p>You may find GraphQL more useful here as it returns easy to consume json
+output instead of rows returned by SQL.</p>
+<p><img alt="Screenshot-graphql-argument" src="../img/Screenshot-graphql-argument.png" title="GraphQL editor" /></p>
+<h3 id="aggregations">Aggregations</h3>
+<p>Let's try aggregation queries to sum up values of our argument
+<code>amount0</code>.</p>
+<pre><code class="language-sql">select sum(a.decimal) as sum
+from starknet_goerli.argument a
+  left join starknet_goerli.event e on a.event_id = e.id
+where e.transmitter_contract = '0x4b05cce270364e2e4bf65bde3e9429b50c97ea3443b133442f838045f41e733'
+      and e.name = 'Mint'
+      and a.name = 'amount0';
+</code></pre>
+<pre><code class="language-graphql">{
+  starknet_goerli_argument_aggregate(where: {
+      name: {_eq: &quot;amount0&quot;}, 
+      event: {name: {_eq: &quot;Mint&quot;}, transmitter_contract: {_eq: &quot;0x4b05cce270364e2e4bf65bde3e9429b50c97ea3443b133442f838045f41e733&quot;}}
+    }) {
+    aggregate {
+      sum {
+        decimal
+      }
+    }
+  }
+}
+</code></pre>
+<p>Both queries arrive at the same number
+<code>7468354995607923658930301617</code> which may tell you something. </p>
+<p>So far both GraphQL and SQL get the job done.</p>
+<h3 id="complex-aggregations">Complex aggregations</h3>
+<p>Now for a more meaningful analysis let's try to calculate <em>daily mint
+volume</em> of a given smart contract. We would need to sum up all <code>amount0</code>
+values of <code>Mint</code> events emitted per day. We determine date by
+<code>timestamp</code> fields of <code>block</code>s that contains transactions with our
+events, and would need to round them up to <code>date</code>s.</p>
+<p>Alas, this is not possible with the GraphQL aggregation queries we have
+available. But SQL does it well with its functions and the aggregation
+keyword <code>group by</code>.</p>
+<pre><code class="language-sql">select
+  (to_timestamp((b.&quot;timestamp&quot;))) :: date as dt,
+  sum(a.decimal)                          as sum
+from starknet_goerli.argument a
+  left join starknet_goerli.event e on a.event_id = e.id
+  left join starknet_goerli.transaction t on e.transaction_hash = t.transaction_hash
+  left join starknet_goerli.block b on t.block_number = b.block_number
+where e.transmitter_contract = '0x4b05cce270364e2e4bf65bde3e9429b50c97ea3443b133442f838045f41e733'
+      and e.name = 'Mint'
+      and a.name = 'amount0'
+group by dt
+order by dt desc
+limit 10;
+</code></pre>
+<p>Returns a table you can interpret and perhaps make a chart out of.</p>
+<p><img alt="Screenshot-sql-select-daily-mint" src="../img/Screenshot-sql-select-daily-mint.png" title="SQL select daily mint" /></p>
+<h2 id="views">Views</h2>
+<p>You can use the full power and flexibility of SQL in the web console and
+observe the results in the output table. But can you consume these
+results as easily as you do the ones from GraphQL? Which returns json
+and can be called via http. Yes you can, with the help of <em>views</em> which
+can turn your SQL select statements into GraphQL queries.</p>
+<p>Enter SQL <code>select</code> statement of your query into the web console editor.
+But instead of <code>Run Query</code> switch to <code>create view</code>, give it a name then
+<code>Create view</code>. We'll persist your query as a database view and make it
+available as a GraphQL query node. Note its name will be prefixed with
+<code>user_</code> to distinguish it from the existing entities.</p>
+<p><img alt="Screenshot-sql-create-view.png" src="../img/Screenshot-sql-create-view.png" title="SQL create view" /></p>
+<p>You can find this new query <code>user_daily_mint</code> in the Explorer and run it
+just like any other GraphQL query.</p>
+<p><img alt="Screenshot-graphql-daily-mint.png" src="../img/Screenshot-graphql-daily-mint.png" title="GraphQL daily mint" /></p>
+<p>The query can also be called via API and its results can be
+easily consumed as json.</p>
+<pre><code class="language-bash">curl https://hasura.dev.summary.dev/v1/graphql --data-raw '{&quot;query&quot;:&quot;{user_daily_mint {dt sum}}&quot;}'
+</code></pre>
+<h2 id="examples">Examples</h2>
+<p>Let's look at a couple of examples that show how SQL can be used to
+analyse blockchain data, then can be turned into persistent GraphQL
+queries to be consumed via our API.</p>
+<h3 id="daily-transaction-count">Daily transaction count</h3>
+<p>This SQL select counts total transactions per day.
+Note the familiar rounding of <code>block.timestamp</code> to <code>date</code> which we use to
+<code>group by</code>.</p>
+<pre><code class="language-sql">select
+  to_timestamp(b.timestamp) :: date as dt,
+  count(t.transaction_hash)
+from starknet_goerli.transaction as t
+  left join starknet_goerli.block b on t.block_number = b.block_number
+group by dt
+order by dt desc
+</code></pre>
+<p>With this select we create <code>daily_transactions</code> view in the web console's
+SQL editor...</p>
+<p><img alt="Screenshot-sql-daily-transactions.png" src="../img/Screenshot-sql-daily-transactions.png" title="SQL daily transactions" /></p>
+<p>... to find <code>user_daily_transactions</code> node in GraphQL Explorer.</p>
+<p><img alt="Screenshot-graphql-daily-transactions.png" src="../img/Screenshot-graphql-daily-transactions.png" title="GraphQL daily transactions" /></p>
+<p>And call the query with http API. Results of such statistical queries can be used to construct charts.</p>
+<pre><code class="language-bash">curl https://hasura.dev.summary.dev/v1/graphql --data-raw '{&quot;query&quot;:&quot;{user_daily_transactions {dt count}}&quot;}'
+</code></pre>
+<h3 id="top-functions">Top functions</h3>
+<p>This SQL select counts the number of smart contract function invocations
+and sorts them by the this count to show the ones called the most.</p>
+<pre><code class="language-sql">select
+  t.function,
+  count(t.function) ct
+from starknet_goerli.transaction t
+group by t.function
+order by ct desc;
+</code></pre>
+<p>GraphQL query created from this select <code>user_top_functions</code>... </p>
+<pre><code class="language-graphql">{
+  user_top_functions(limit: 5) {
+    function
+    ct
+  }
+}
+</code></pre>
+<p>... returns 5 most popular functions.</p>
+<pre><code class="language-json">{
+  &quot;data&quot;: {
+    &quot;user_top_functions&quot;: [
+      {
+        &quot;function&quot;: &quot;__execute__&quot;,
+        &quot;ct&quot;: &quot;5558963&quot;
+      },
+      {
+        &quot;function&quot;: &quot;execute&quot;,
+        &quot;ct&quot;: &quot;1414980&quot;
+      },
+      {
+        &quot;function&quot;: &quot;constructor&quot;,
+        &quot;ct&quot;: &quot;978904&quot;
+      },
+      {
+        &quot;function&quot;: &quot;anonymous&quot;,
+        &quot;ct&quot;: &quot;763224&quot;
+      },
+      {
+        &quot;function&quot;: &quot;initialize&quot;,
+        &quot;ct&quot;: &quot;322249&quot;
+      }
+    ]
+  }
+}
+</code></pre>
+<p>Try it via http API.</p>
+<pre><code class="language-bash"> curl https://hasura.dev.summary.dev/v1/graphql --data-raw '{&quot;query&quot;:&quot;{user_top_functions {function ct}}&quot;}'
+</code></pre>
+<p>The above examples show that you can use SQL queries which can be rather
+complex, to aggregate over any data you may be interested in.</p>
+<p>In most cases no separate indexer process is needed to interpret your
+data. If however you want to do something that SQL, even with custom
+views cannot, you can query for specific data with GraphQL then consume
+the results by your own software which will interpret it.</p></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+                <p>namespace</p>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script>
+            var base_url = "..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../js/base.js" defer></script>
+        <script src="../search/main.js" defer></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

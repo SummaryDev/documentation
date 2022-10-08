@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        <link rel="canonical" href="https://summary.dev/docs/queries/">
+        <link rel="shortcut icon" href="../img/favicon.ico">
+        <title>Queries - Summary</title>
+<link href="../css/bootstrap.min.css" rel="stylesheet">
+<link href="../css/font-awesome.min.css" rel="stylesheet">
+<link href="../css/base.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/github.min.css">
+<script src="../js/jquery-1.10.2.min.js" defer></script>
+<script src="../js/bootstrap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/languages/graphql.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+ 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="..">Summary</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbar-collapse">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="navitem">
+                                <a href=".." class="nav-link">Home</a>
+                            </li>
+                            <li class="navitem active">
+                                <a href="./" class="nav-link">Queries</a>
+                            </li>
+                            <li class="navitem">
+                                <a href="../sql/" class="nav-link">SQL</a>
+                            </li>
+                            <li class="navitem">
+                                <a href="../subscriptions/" class="nav-link">Subscriptions</a>
+                            </li>
+                            <li class="navitem">
+                                <a href="../api/" class="nav-link">API</a>
+                            </li>
+                            <li class="navitem">
+                                <a href="../howitworks/" class="nav-link">How it works</a>
+                            </li>
+                            <li class="navitem">
+                                <a href="https://summary.dev/console" class="nav-link">Console</a>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ml-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-toggle="modal" data-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href=".." class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../sql/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="https://github.com/SummaryDev/documentation/blob/main/docs/queries.md" class="nav-link"><i class="fa fa-github"></i> Edit on GitHub</a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-light navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-toggle="collapse" data-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-secondary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-level="1"><a href="#query-blockchain-data-with-graphql" class="nav-link">Query blockchain data with GraphQL</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-level="2"><a href="#explorer" class="nav-link">Explorer</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#filter" class="nav-link">Filter</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#input-and-event-data-decoded-with-abi" class="nav-link">Input and event data decoded with ABI</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#query-for-your-contracts-events" class="nav-link">Query for your contract's events</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#query-for-values-in-json-payloads" class="nav-link">Query for values in JSON payloads</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#proxy-contracts" class="nav-link">Proxy contracts</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#aggregation" class="nav-link">Aggregation</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="query-blockchain-data-with-graphql">Query blockchain data with GraphQL</h1>
+<p>We store blockchain data decoded and normalized in tables in a
+relational database. Then make this data available for querying by
+GraphQL and SQL. </p>
+<p><strong>GraphQL</strong> lets you combine queries and retrieve records related and
+not, all by one query, saving you round trips getting them piece by
+piece like in REST APIs. It is also easier to construct than SQL and
+lends itself well to be used in API calls as it returns json. A
+developer can craft a GraphQL query in the <a href="../../console">web console</a>
+and once it's perfected can send the same query to our http
+<a href="../api/">API</a> endpoint.</p>
+<p>Queries with <a href="../sql/">SQL</a> can be more sophisticated and are used for
+grouping and joining records which would not be possible with GraphQL.
+These queries can then be wrapped into GraphQL by making them into
+persistent queries as <a href="../sql/#views">views</a>.</p>
+<p>Let's look at the basics of GraphQL queries for blockchain data. </p>
+<h2 id="explorer">Explorer</h2>
+<p>While you can write queries by hand you may find the GraphQL schema
+<strong>Explorer</strong> useful in the beginning. Open the pane on the left to put
+together a GraphQL query by selecting entities to return with their
+fields, and by adding filter, limit and sort parameters.</p>
+<p>Navigate to find entities you're interested in, like <em>events</em> in 
+StarkNet test chain <em>goerli</em>. Open node <code>starknet_goerli_event</code> in the
+Explorer's tree and select the fields you want to retrieve like <code>name</code>.
+Smart contracts emit events with some payload that we parse into
+<code>arguments</code>, so select these in the tree together with their fields
+<code>value</code> and others.</p>
+<p><img alt="Screenshot-explorer.png" src="../img/Screenshot-explorer.png" title="GraphQL explorer" /></p>
+<h2 id="filter">Filter</h2>
+<p>There are millions of events in the database and you don't want to
+retrieve all of them, so let's narrow down the search by adding <em>where</em>
+clause filters and <em>limit</em> the number of records returned.</p>
+<p>Open the <code>where</code> node in the tree under <code>starknet_goerli_event</code> to add
+filter and <code>limit</code> conditions:</p>
+<ul>
+<li>event <code>name</code> field is equal <code>_eq</code> to <code>Mint</code></li>
+<li>smart contract address that emitted the event <code>_eq</code> to <code>0x4b0...</code></li>
+<li><code>limit</code> results to 3.</li>
+</ul>
+<p><img alt="Screenshot-explorer-filter.png" src="../img/Screenshot-explorer-filter.png" title="GraphQL filter" /></p>
+<p>One of the features of GraphQL is the ability to combine many entities
+in one query. To illustrate it here let's add a query for all <code>DEPLOY</code>
+transactions in block 100000, together with their inputs. Note here that
+you can filter entities at all levels: the block by its <code>block_number</code>
+and transactions within the block by their <code>type</code>.</p>
+<p>If you paste this query into the middle editor pane it will open the
+corresponding nodes in the Explorer: the panes work nicely together.</p>
+<pre><code class="language-graphql">{
+  starknet_goerli_event(where: {
+    name: {_eq: &quot;Mint&quot;}, 
+    transmitter_contract: {_eq: &quot;0x4b05cce270364e2e4bf65bde3e9429b50c97ea3443b133442f838045f41e733&quot;}
+    }, 
+    limit: 3) {
+    name
+    arguments {
+      name
+      type
+      value
+      decimal
+    }
+    transaction_hash
+  }
+  starknet_goerli_block(where: {
+    block_number: {_eq: 100000}}) {
+    transactions(where: {type: {_eq: &quot;DEPLOY&quot;}}) {
+      function
+      entry_point_selector
+      inputs {
+        name
+        type
+        value
+      }
+    }
+  }
+}
+</code></pre>
+<p>You can get query results directly from our http endpoint. Send the
+query you tried in the web console as an http POST parameter with
+<code>curl</code>:</p>
+<pre><code class="language-bash">curl https://hasura.prod.summary.dev/v1/graphql --data-raw '{&quot;query&quot;:&quot;{starknet_goerli_event(where: {name: {_eq: \&quot;Mint\&quot;}, transmitter_contract: {_eq: \&quot;0x4b05cce270364e2e4bf65bde3e9429b50c97ea3443b133442f838045f41e733\&quot;}}, limit: 3) { name arguments { name type value decimal } transaction_hash} starknet_goerli_block(where: {block_number: {_eq: 100000}}) {transactions(where: {type: {_eq: \&quot;DEPLOY\&quot;}}) {function entry_point_selector inputs {name type value}}}}&quot;}'
+</code></pre>
+<p>More on this in the section on our <a href="../api/">API</a>.</p>
+<h2 id="input-and-event-data-decoded-with-abi">Input and event data decoded with ABI</h2>
+<p>Blockchain APIs return transaction inputs and event payload in bulk
+arrays of binary data which are hard to interpret. We decode these for
+you with smart contract ABIs. For <a href="#proxy-contracts">proxy contracts</a> we
+attempt to find the implementation contract's ABI to parse the data
+correctly.</p>
+<p>Take a look at the transactions and events of block 100000 parsed and
+decoded. Try this query (which omits most fields for brevity).</p>
+<pre><code class="language-graphql">{
+  starknet_goerli_block(where: {block_number: {_eq: 100000}}) {
+    transactions {
+      function
+      entry_point_selector
+      inputs {
+        name
+        type
+        value
+      }
+      events {
+        name
+        transmitter_contract
+        arguments {
+          name
+          type
+          value
+          decimal
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>Transaction function and its inputs are decoded using the contract's
+ABI. See smart contract function name decoded as <code>execute</code> together with
+its inputs: <code>to</code> as type <code>felt</code>, <code>calldata</code> as a three element <code>felt</code>
+array.</p>
+<pre><code class="language-json">{
+&quot;function&quot;: &quot;execute&quot;,
+&quot;entry_point_selector&quot;: &quot;0x240060cdb34fcc260f41eac7474ee1d7c80b7e3607daff9ac67c7ea2ebb1c44&quot;,
+&quot;inputs&quot;: [
+  {
+    &quot;name&quot;: &quot;to&quot;,
+    &quot;type&quot;: &quot;felt&quot;,
+    &quot;value&quot;: &quot;0x4bc8ac16658025bff4a3bd0760e84fcf075417a4c55c6fae716efdd8f1ed26c&quot;
+  },
+  {
+    &quot;name&quot;: &quot;selector&quot;,
+    &quot;type&quot;: &quot;felt&quot;,
+    &quot;value&quot;: &quot;0x219209e083275171774dab1df80982e9df2096516f06319c5c6d71ae0a8480c&quot;
+  },
+  {
+    &quot;name&quot;: &quot;calldata&quot;,
+    &quot;type&quot;: &quot;felt[3]&quot;,
+    &quot;value&quot;: [
+      &quot;0x263acca23357479031157e30053fe10598077f24f427ac1b1de85487f5cd124&quot;,
+      &quot;0x204fce5e3e25026110000000&quot;,
+      &quot;0x0&quot;
+    ]
+  },
+  {
+    &quot;name&quot;: &quot;nonce&quot;,
+    &quot;type&quot;: &quot;felt&quot;,
+    &quot;value&quot;: &quot;0x64&quot;
+  }
+]
+}
+</code></pre>
+<p>Events are also decoded: see <code>Transfer</code> event and its argument <code>tokenId</code>
+as struct <code>Uint256</code> with <code>low</code> and <code>high</code> hex, also converted into a
+decimal number. Converting from felt and Uint256 into decimal is useful
+for summing up and comparing values.</p>
+<pre><code class="language-json">{
+&quot;events&quot;: [
+  {
+    &quot;name&quot;: &quot;Transfer&quot;,
+    &quot;transmitter_contract&quot;: &quot;0x4e34321e0bce0e4ff8ff0bcb3a9a030d423bca29a9d99cbcdd60edb9a2bf03a&quot;,
+    &quot;arguments&quot;: [
+      {
+        &quot;name&quot;: &quot;from_&quot;,
+        &quot;type&quot;: &quot;felt&quot;,
+        &quot;value&quot;: &quot;0x0&quot;,
+        &quot;decimal&quot;: &quot;0&quot;
+      },
+      {
+        &quot;name&quot;: &quot;to&quot;,
+        &quot;type&quot;: &quot;felt&quot;,
+        &quot;value&quot;: &quot;0x1778c6596d715a8613d0abcbe4fc08c052d208dce3b43eeb6b4dc24ddd62ed9&quot;,
+        &quot;decimal&quot;: &quot;663536632620382607614490239145922341009321511960837718021901264100395462361&quot;
+      },
+      {
+        &quot;name&quot;: &quot;tokenId&quot;,
+        &quot;type&quot;: &quot;Uint256&quot;,
+        &quot;value&quot;: {
+          &quot;low&quot;: &quot;0x3d5b&quot;,
+          &quot;high&quot;: &quot;0x0&quot;
+        },
+        &quot;decimal&quot;: &quot;15707&quot;
+      }
+    ]
+  }
+]
+}
+</code></pre>
+<p>Let's get the raw block for comparison. Paste this into the GraphQL
+query window and you'll see <code>raw</code> block 100000 as we received it from
+the blockchain node API, with its transaction <code>calldata</code> and event
+payload <code>data</code> undecoded.</p>
+<pre><code class="language-graphql">{
+  starknet_goerli_raw_block_by_pk(block_number: 100000) {
+    raw
+  }
+}
+</code></pre>
+<p>The raw block has transaction inputs as <code>calldata</code> in a bulk array, like
+in this excerpt.</p>
+<pre><code class="language-json">{
+&quot;type&quot;: &quot;INVOKE_FUNCTION&quot;,
+&quot;max_fee&quot;: &quot;0x0&quot;,
+&quot;calldata&quot;: [
+  &quot;0x4bc8ac16658025bff4a3bd0760e84fcf075417a4c55c6fae716efdd8f1ed26c&quot;,
+  &quot;0x219209e083275171774dab1df80982e9df2096516f06319c5c6d71ae0a8480c&quot;,
+  &quot;0x3&quot;,
+  &quot;0x263acca23357479031157e30053fe10598077f24f427ac1b1de85487f5cd124&quot;,
+  &quot;0x204fce5e3e25026110000000&quot;,
+  &quot;0x0&quot;,
+  &quot;0x64&quot;
+]
+}
+</code></pre>
+<p>Event payload <code>data</code> is in bulk as well. </p>
+<pre><code class="language-json">{
+&quot;events&quot;: [
+  {
+    &quot;data&quot;: [
+      &quot;0x0&quot;,
+      &quot;0x1778c6596d715a8613d0abcbe4fc08c052d208dce3b43eeb6b4dc24ddd62ed9&quot;,
+      &quot;0x3d5b&quot;,
+      &quot;0x0&quot;
+    ],
+    &quot;keys&quot;: [
+      &quot;0x99cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9&quot;
+    ],
+    &quot;from_address&quot;: &quot;0x4e34321e0bce0e4ff8ff0bcb3a9a030d423bca29a9d99cbcdd60edb9a2bf03a&quot;
+  }
+]
+}
+</code></pre>
+<h2 id="query-for-your-contracts-events">Query for your contract's events</h2>
+<p>You are probably interested not in whole blocks but in events emitted by
+your own contract. Let's see how we can search with this query for
+<code>Mint</code> events of contract <code>0x4b0...</code>, limited to one result for brevity.</p>
+<pre><code class="language-graphql">{
+  starknet_goerli_event(where: 
+    {
+        name: {_eq: &quot;Mint&quot;}, 
+        transmitter_contract: {_eq: &quot;0x4b05cce270364e2e4bf65bde3e9429b50c97ea3443b133442f838045f41e733&quot;}
+    }, 
+    limit: 1) {
+    name
+    arguments {
+      name
+      type
+      value
+      decimal
+    }
+    transaction_hash
+  }
+}
+</code></pre>
+<p>The query returns your event with its payload <em>arguments</em> decoded.</p>
+<pre><code class="language-json">{
+  &quot;data&quot;: {
+    &quot;event&quot;: [
+      {
+        &quot;name&quot;: &quot;Mint&quot;,
+        &quot;arguments&quot;: [
+          {
+            &quot;name&quot;: &quot;sender&quot;,
+            &quot;type&quot;: &quot;felt&quot;,
+            &quot;value&quot;: &quot;0x1ea2f12a70ad6a052f99a49dace349996a8e968a0d6d4e9ec34e0991e6d5e5e&quot;,
+            &quot;decimal&quot;: &quot;866079946690358847859985129991514658898248253189226492476287621475869744734&quot;
+          },
+          {
+            &quot;name&quot;: &quot;amount0&quot;,
+            &quot;type&quot;: &quot;Uint256&quot;,
+            &quot;value&quot;: {
+              &quot;low&quot;: &quot;0x52b7d2dcc80cd2e4000000&quot;,
+              &quot;high&quot;: &quot;0x0&quot;
+            },
+            &quot;decimal&quot;: &quot;100000000000000000000000000&quot;
+          },
+          {
+            &quot;name&quot;: &quot;amount1&quot;,
+            &quot;type&quot;: &quot;Uint256&quot;,
+            &quot;value&quot;: {
+              &quot;low&quot;: &quot;0x2d79883d2000&quot;,
+              &quot;high&quot;: &quot;0x0&quot;
+            },
+            &quot;decimal&quot;: &quot;50000000000000&quot;
+          }
+        ],
+        &quot;transaction_hash&quot;: &quot;0x521e56da1f33412f2f5e81dc585683c47b19783995aa3ebdcd84f5739cea489&quot;
+      }
+    ]
+  }
+}
+</code></pre>
+<p>You can send the same query to the http API endpoint; here we omitted
+the <code>limit</code> to get all <code>Mint</code> events. Such queries can be automated and 
+feed your web and backend applications.</p>
+<pre><code class="language-bash">curl https://hasura.prod.summary.dev/v1/graphql --data-raw '{&quot;query&quot;:&quot;query { starknet_goerli_event(where: {name: {_eq: \&quot;Mint\&quot;}, transmitter_contract: {_eq: \&quot;0x4b05cce270364e2e4bf65bde3e9429b50c97ea3443b133442f838045f41e733\&quot;}}) { name arguments { name type value decimal } transaction_hash }}&quot;}'
+</code></pre>
+<p>Naturally, you can add as many conditions to <code>where</code> clause as
+needed to select the events you're interested in.</p>
+<p>This query returns 10 <code>Mint</code> events as <code>starknet_goerli_event</code> entities
+which have <code>arguments</code> with <code>amount1</code> values less than 10. See the
+<code>where</code> clause selecting events with payload <code>arguments</code> with name <code>_eq</code>
+to <code>amount1</code> and its value in decimal less than <code>_lt</code> 10.</p>
+<pre><code class="language-graphql">query event_mint_argument_amount1_lte_10 {
+  starknet_goerli_event(where: {
+      arguments: {
+        name: {_eq: &quot;amount1&quot;}, 
+        decimal: {_lt: &quot;10&quot;}
+      }, 
+      name: {_eq: &quot;Mint&quot;}, 
+      transmitter_contract: {_eq: &quot;0x4b05cce270364e2e4bf65bde3e9429b50c97ea3443b133442f838045f41e733&quot;}
+    },
+    limit: 10) {
+    name
+    arguments {
+      name
+      type
+      value
+      decimal
+    }
+    transaction_hash
+  }
+}
+</code></pre>
+<p>The following query accomplishes the same, but from the other end: it
+requests all arguments as <code>starknet_goerli_argument</code> entities,
+satisfying conditions <code>amount1</code> and <code>&lt; 10</code>, and whose owning event is
+<code>Mint</code> of contract <code>0x4b0...</code>. The query returns results as arguments
+together with their event, transaction and its block number.</p>
+<pre><code class="language-graphql">query argument_amount1_lte_10_event_mint {
+  starknet_goerli_argument(where: {
+      decimal: {_lt: &quot;10&quot;}, 
+      name: {_eq: &quot;amount1&quot;}, 
+      event: {name: {_eq: &quot;Mint&quot;}, transmitter_contract: {_eq: &quot;0x4b05cce270364e2e4bf65bde3e9429b50c97ea3443b133442f838045f41e733&quot;}}
+    },
+    limit: 10) {
+    decimal
+    name
+    type
+    value
+    event {
+      transaction_hash
+      transaction {
+        block_number
+      }
+    }
+  }
+}
+</code></pre>
+<p>Another example query requests 10 <code>Transfer</code> events with a given
+destination address <code>0x455...</code> specified by the <code>to</code> event argument.
+Note these events come from various contracts as seen in different
+<code>transmitter_contract</code> fields, and you can narrow down further if
+needed.</p>
+<pre><code class="language-graphql">query event_transfer_to {
+  starknet_goerli_event(where: {name: {_eq: &quot;Transfer&quot;}, 
+    arguments: {name: {_eq: &quot;to&quot;}, value: {_eq: &quot;0x455eb02b7080a4ad5d2161cb94928acec81a4c9037b40bf106c4c797533c3e5&quot;}}}
+    limit: 10) {
+    name
+    arguments {
+      name
+      type
+      value
+      decimal
+    }
+    transaction_hash
+    transmitter_contract
+  }
+}
+</code></pre>
+<h2 id="query-for-values-in-json-payloads">Query for values in JSON payloads</h2>
+<p>Some event and transaction payload fields are atomic of type <code>felt</code> and
+are easily accessible by queries, but some are members of <em>structs</em> and
+are stored as json values.</p>
+<p>If the data you're interested in lies in a field inside json, you can
+get to it by specifying a path to this field in your query.</p>
+<p>This query searches for smart contract function input <code>index_and_x</code> of
+contract <code>0x579...</code> which is defined as a struct.</p>
+<pre><code class="language-graphql">{
+  starknet_goerli_input(where: {name: {_eq: &quot;index_and_x&quot;}, 
+    transaction: {contract_address: {_eq: &quot;0x579f32b8090d8d789d4b907a8935a75f6de583c9d60893586e24a83d173b6d5&quot;}}}, 
+    limit: 1) {
+    value
+  }
+}
+</code></pre>
+<p>The result is the value of <code>index_and_x</code> as json with fields <code>index</code> and
+<code>values</code>.</p>
+<pre><code class="language-json">{
+  &quot;data&quot;: {
+    &quot;input&quot;: [
+      {
+        &quot;value&quot;: {
+          &quot;index&quot;: &quot;0x39103d23f38a0c91d4eebbc347a5170d00f4022cbb10bfa1def9ad49df782d6&quot;,
+          &quot;values&quot;: [
+            &quot;0x586dbbbd0ba18ce0974f88a19489cca5fcd5ce29e723ad9b7d70e2ad9998a81&quot;,
+            &quot;0x6fefcb8a0e36b801fe98d66dc1513cce456970913b77b8058fea640a69daaa9&quot;
+          ]
+        }
+      }
+    ]
+  }
+}
+</code></pre>
+<p>The following query digs into json by specifying path <code>values[1]</code> to the
+second half of the tuple named <code>values</code>. Note the path is not part of
+the where clause but is applied to the returned field directly.</p>
+<pre><code class="language-graphql">{
+  starknet_goerli_input(where: {name: {_eq: &quot;index_and_x&quot;}, 
+    transaction: {contract_address: {_eq: &quot;0x579f32b8090d8d789d4b907a8935a75f6de583c9d60893586e24a83d173b6d5&quot;}}}, limit: 1) {
+    value(path: &quot;values[1]&quot;)
+  }
+}
+</code></pre>
+<p>And returns bare <code>y</code> values of <code>index_and_x</code>:</p>
+<pre><code class="language-json">{
+  &quot;data&quot;: {
+    &quot;input&quot;: [
+      {
+        &quot;value&quot;: &quot;0x6fefcb8a0e36b801fe98d66dc1513cce456970913b77b8058fea640a69daaa9&quot;
+      }
+    ]
+  }
+}
+</code></pre>
+<p>Let's see what the ABI of our contract <code>0x579...</code> looks like.</p>
+<pre><code class="language-graphql">{
+  starknet_goerli_raw_abi_by_pk(contract_address: &quot;0x579f32b8090d8d789d4b907a8935a75f6de583c9d60893586e24a83d173b6d5&quot;) {
+    raw(path: &quot;[0]&quot;)
+  }
+}
+</code></pre>
+<p>The type of <code>index_and_x</code> input is struct <code>IndexAndValues</code>. See its
+definition in the ABI that shows how to get the second half of the tuple
+<code>values(x : felt, y : felt)</code> by <code>path: "values[1]"</code>.</p>
+<pre><code class="language-json">{
+  &quot;data&quot;: {
+    &quot;raw_abi_by_pk&quot;: {
+      &quot;raw&quot;: {
+        &quot;name&quot;: &quot;IndexAndValues&quot;,
+        &quot;size&quot;: 3,
+        &quot;type&quot;: &quot;struct&quot;,
+        &quot;members&quot;: [
+          {
+            &quot;name&quot;: &quot;index&quot;,
+            &quot;type&quot;: &quot;felt&quot;,
+            &quot;offset&quot;: 0
+          },
+          {
+            &quot;name&quot;: &quot;values&quot;,
+            &quot;type&quot;: &quot;(x : felt, y : felt)&quot;,
+            &quot;offset&quot;: 1
+          }
+        ]
+      }
+    }
+  }
+}
+</code></pre>
+<h2 id="proxy-contracts">Proxy contracts</h2>
+<p>Proxy contracts delegate transaction function calls to implementation
+contracts. Transaction input and event data are encoded per
+implementation contract's ABI. Implementation contracts change and with
+them changes the proxy contract's ABI. </p>
+<p>While interpreting proxy contract calls may be challenging, the data can
+still be decoded, by finding the implementation contract and its ABI.
+This is done by calling <code>get_implementation</code> or a similar method of the
+proxy contract, or by looking at the latest <code>Upgraded</code> or similarly
+named event indicating the implementation changed.</p>
+<p>This query requests three transactions sent to a proxy contract
+<code>0x474...</code>. You see the first <code>DEPLOY</code> transaction setting the
+implementation contract address to <code>0x90a...</code>. </p>
+<p>Let's add to the query a call to <code>raw_abi</code> to get ABIs for both proxy 
+and implementation contracts, for demonstration.</p>
+<pre><code class="language-graphql">{
+  starknet_goerli_transaction(limit: 3, where: {contract_address: {_eq: &quot;0x47495c732aa419dfecb43a2a78b4df926fddb251c7de0e88eab90d8a0399cd8&quot;}}) {
+    inputs {
+      type
+      value
+      name
+    }
+    function
+  }
+  starknet_goerli_raw_abi(where: {contract_address: {_in: [&quot;0x47495c732aa419dfecb43a2a78b4df926fddb251c7de0e88eab90d8a0399cd8&quot;, &quot;0x90aa7a9203bff78bfb24f0753c180a33d4bad95b1f4f510b36b00993815704&quot;]}}) {
+    contract_address
+    raw
+  }
+}
+</code></pre>
+<p>See the contract function input <code>call_array</code> of type <code>CallArray</code> is
+defined in the implementation, not the proxy contract's ABI.</p>
+<pre><code class="language-json">{
+&quot;contract_address&quot;: &quot;0x90aa7a9203bff78bfb24f0753c180a33d4bad95b1f4f510b36b00993815704&quot;,
+    &quot;raw&quot;: [
+      {
+        &quot;name&quot;: &quot;CallArray&quot;,
+        &quot;size&quot;: 4,
+        &quot;type&quot;: &quot;struct&quot;,
+        &quot;members&quot;: [
+          {
+            &quot;name&quot;: &quot;to&quot;,
+            &quot;type&quot;: &quot;felt&quot;,
+            &quot;offset&quot;: 0
+          },
+          {
+            &quot;name&quot;: &quot;selector&quot;,
+            &quot;type&quot;: &quot;felt&quot;,
+            &quot;offset&quot;: 1
+          },
+          {
+            &quot;name&quot;: &quot;data_offset&quot;,
+            &quot;type&quot;: &quot;felt&quot;,
+            &quot;offset&quot;: 2
+          },
+          {
+            &quot;name&quot;: &quot;data_len&quot;,
+            &quot;type&quot;: &quot;felt&quot;,
+            &quot;offset&quot;: 3
+          }
+        ]
+      }
+    ]
+}
+</code></pre>
+<p>Yet <code>call_array</code> is still decoded properly as <code>__execute__</code> function's
+input. See this excerpt from the query result:</p>
+<pre><code class="language-json">{
+&quot;inputs&quot;: [
+    {
+    &quot;type&quot;: &quot;CallArray[1]&quot;,
+    &quot;value&quot;: [
+      {
+        &quot;to&quot;: &quot;0x4c5327da1f289477951750208c9f97ca0f53afcd256d4363060268750b07f92&quot;,
+        &quot;data_len&quot;: &quot;0x3&quot;,
+        &quot;selector&quot;: &quot;0x219209e083275171774dab1df80982e9df2096516f06319c5c6d71ae0a8480c&quot;,
+        &quot;data_offset&quot;: &quot;0x0&quot;
+      }
+    ],
+    &quot;name&quot;: &quot;call_array&quot;
+    },
+    {
+    &quot;type&quot;: &quot;felt[3]&quot;,
+    &quot;value&quot;: [
+      &quot;0x30295374333e5b9fc34de3ef3822867eaa99af4c856ecf624d34574f8d7d8ea&quot;,
+      &quot;0xffffffffffffffffffffffffffffffff&quot;,
+      &quot;0xffffffffffffffffffffffffffffffff&quot;
+    ],
+    &quot;name&quot;: &quot;calldata&quot;
+    },
+    {
+    &quot;type&quot;: &quot;felt&quot;,
+    &quot;value&quot;: &quot;0x0&quot;,
+    &quot;name&quot;: &quot;nonce&quot;
+    }
+    ],
+    &quot;function&quot;: &quot;__execute__&quot;
+}
+</code></pre>
+<h2 id="aggregation">Aggregation</h2>
+<p>By now you know how to query for all your inputs and events, but how do
+you interpret them: sum them up, compare or calculate? </p>
+<p>Let's say you want to derive a number from some of your events, for example, to
+calculate Total Value Locked, which is a sum of arguments <code>amount0</code> of
+all <code>Mint</code> events.</p>
+<p>One approach is to query for all of the values of <code>amount0</code>; here we
+limit results to 10 for brevity.</p>
+<pre><code class="language-graphql">{
+  starknet_goerli_argument(where: {
+      name: {_eq: &quot;amount0&quot;}, 
+      event: {name: {_eq: &quot;Mint&quot;}, transmitter_contract: {_eq: &quot;0x4b05cce270364e2e4bf65bde3e9429b50c97ea3443b133442f838045f41e733&quot;}}
+    }, 
+    limit: 10) {
+    type
+    value
+    name
+    decimal
+  }
+}
+</code></pre>
+<p>See the values as <code>Uint256</code> struct and also conveniently converted into
+decimals so you can sum them up.</p>
+<pre><code class="language-json">{
+    &quot;type&quot;: &quot;Uint256&quot;,
+    &quot;value&quot;: {
+      &quot;low&quot;: &quot;0x52b7d2dcc80cd2e4000000&quot;,
+      &quot;high&quot;: &quot;0x0&quot;
+    },
+    &quot;name&quot;: &quot;amount0&quot;,
+    &quot;decimal&quot;: &quot;100000000000000000000000000&quot;
+}
+</code></pre>
+<p>You can consume this query's results by your own software and sum up the
+values of <code>amount0</code>. This is the approach of some other indexers.</p>
+<p>But since your data is already in a relational database's table, you can
+run an <strong>aggregation</strong> query over the values, which sums them up and
+returns the final result in the same query, all with no extra coding 
+effort.</p>
+<p>That's why the values were converted into decimals when they were
+persisted: GraphQL query <code>argument_aggregate</code> calls a SQL query with an
+aggregation function <code>sum</code> over a numeric column. Database type <code>numeric
+78</code> used for the <code>decimal</code> column is large enough to support Uint256 and
+felt and arithmetic operations over them.</p>
+<p>This query aggregates decimal values of <code>amount0</code> arguments of all 
+<code>Mint</code> events.</p>
+<pre><code class="language-graphql">{
+  starknet_goerli_argument_aggregate(where: {
+      name: {_eq: &quot;amount0&quot;}, 
+      event: {name: {_eq: &quot;Mint&quot;}, transmitter_contract: {_eq: &quot;0x4b05cce270364e2e4bf65bde3e9429b50c97ea3443b133442f838045f41e733&quot;}}
+    }) {
+    aggregate {
+      sum {
+        decimal
+      }
+      avg {
+        decimal
+      }
+      min {
+        decimal
+      }
+      max {
+        decimal
+      }
+    }
+  }
+}
+</code></pre>
+<p>Returns the total sum (TVL) as well as results of other aggregation 
+functions: min, max, avg.</p>
+<pre><code class="language-json">{
+  &quot;data&quot;: {
+    &quot;argument_aggregate&quot;: {
+      &quot;aggregate&quot;: {
+        &quot;sum&quot;: {
+          &quot;decimal&quot;: &quot;7312519852578770281612328156&quot;
+        },
+        &quot;avg&quot;: {
+          &quot;decimal&quot;: &quot;148767543894266393001838&quot;
+        },
+        &quot;min&quot;: {
+          &quot;decimal&quot;: &quot;25047631971864&quot;
+        },
+        &quot;max&quot;: {
+          &quot;decimal&quot;: &quot;5000000000000000000000000000&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+                <p>namespace</p>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script>
+            var base_url = "..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../js/base.js" defer></script>
+        <script src="../search/main.js" defer></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

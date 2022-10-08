@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        <link rel="canonical" href="https://summary.dev/docs/subscriptions/">
+        <link rel="shortcut icon" href="../img/favicon.ico">
+        <title>Subscriptions - Summary</title>
+<link href="../css/bootstrap.min.css" rel="stylesheet">
+<link href="../css/font-awesome.min.css" rel="stylesheet">
+<link href="../css/base.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/github.min.css">
+<script src="../js/jquery-1.10.2.min.js" defer></script>
+<script src="../js/bootstrap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/languages/graphql.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+ 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="..">Summary</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbar-collapse">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="navitem">
+                                <a href=".." class="nav-link">Home</a>
+                            </li>
+                            <li class="navitem">
+                                <a href="../queries/" class="nav-link">Queries</a>
+                            </li>
+                            <li class="navitem">
+                                <a href="../sql/" class="nav-link">SQL</a>
+                            </li>
+                            <li class="navitem active">
+                                <a href="./" class="nav-link">Subscriptions</a>
+                            </li>
+                            <li class="navitem">
+                                <a href="../api/" class="nav-link">API</a>
+                            </li>
+                            <li class="navitem">
+                                <a href="../howitworks/" class="nav-link">How it works</a>
+                            </li>
+                            <li class="navitem">
+                                <a href="https://summary.dev/console" class="nav-link">Console</a>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ml-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-toggle="modal" data-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../sql/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../api/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="https://github.com/SummaryDev/documentation/blob/main/docs/subscriptions.md" class="nav-link"><i class="fa fa-github"></i> Edit on GitHub</a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-light navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-toggle="collapse" data-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-secondary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-level="1"><a href="#subscriptions" class="nav-link">Subscriptions</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-level="2"><a href="#graphql-console" class="nav-link">GraphQL Console</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#nodejs" class="nav-link">Node.js</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#communication-protocol" class="nav-link">Communication protocol</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="subscriptions">Subscriptions</h1>
+<p>A GraphQL subscription is essentially a query where the client receives 
+an update whenever the value of any field changes upstream.</p>
+<p>Subscriptions are supported for all kinds of queries. All the concepts
+of <a href="../queries/">queries</a> hold true for subscriptions as well.</p>
+<p>The subscription will return the latest result of the query being made 
+and not necessarily all the individual events leading up to the result.
+By default, updates are delivered to clients every 1 sec.</p>
+<h2 id="graphql-console">GraphQL Console</h2>
+<p>You can turn any query into a subscription by simply replacing <code>query</code> 
+with <code>subscription</code> as the operation type.</p>
+<p>Let's try this query in the <a href="../../console">web console</a>. It fetches
+names of the three latest events emitted by smart contracts in StarkNet
+goerli chain. To get the latest we <code>order_by</code> auto incremented event
+<code>id</code> descending.</p>
+<pre><code class="language-graphql">query latest_events {
+  starknet_goerli_event(limit: 3, order_by: {id: desc}) {
+    id
+    name
+  }
+}
+</code></pre>
+<p>You should receive results similar to these. If you keep executing the
+query, you'll be getting more recent events, still limited to the 3
+latest ones.</p>
+<pre><code class="language-json">{
+  &quot;data&quot;: {
+    &quot;starknet_goerli_event&quot;: [
+      {
+        &quot;id&quot;: 34127040,
+        &quot;name&quot;: &quot;Transfer&quot;
+      },
+      {
+        &quot;id&quot;: 34127039,
+        &quot;name&quot;: &quot;SubmittedEntry&quot;
+      },
+      {
+        &quot;id&quot;: 34127038,
+        &quot;name&quot;: &quot;SubmittedEntry&quot;
+      }
+    ]
+  }
+}
+</code></pre>
+<p>Now change the operation type from <code>query</code> to <code>subscription</code>.</p>
+<pre><code class="language-graphql">subscription latest_events {
+  starknet_goerli_event(limit: 3, order_by: {id: desc}) {
+    id
+    name
+  }
+}
+</code></pre>
+<p>Click the execution button and see the results start updating
+automatically in the results pane. Note the button icon
+changed from <em>play</em> to <em>stop</em>.</p>
+<p><img alt="Screenshot-subscription.png" src="../img/Screenshot-subscription.png" title="GraphQL subscription" /></p>
+<h2 id="nodejs">Node.js</h2>
+<p>We put together a simple example client that subscribes to the
+blockchain indexer. It is just a few lines of javascript code in
+<a href="https://github.com/SummaryDev/subscriber">subscriber Github repo</a>. Use
+it as a starting point for your own client that reacts to blockchain
+events.</p>
+<p>The example client will wait for events which represent changes in the
+results of a GraphQL query, will print them out and exit after three
+events have been received.</p>
+<p>Its default <em>subscription</em> query fetches the three latest blocks.</p>
+<pre><code class="language-graphql">subscription { starknet_goerli_block(limit: 3, order_by: {block_number: desc}) { block_number, block_hash }}
+</code></pre>
+<p>You can pass your own subscription query as an argument. The following
+query waits for the latest events emitted. Note both this and the
+default query order results ordered <code>desc</code> to get the latest. If you
+query without ordering you'll get the first rows which don't change and
+don't trigger events.</p>
+<pre><code class="language-bash">npm start 'subscription {starknet_goerli_event(limit: 3, order_by: {id: desc}) {id, name}}'
+</code></pre>
+<h2 id="communication-protocol">Communication protocol</h2>
+<p>Our backend Hasura GraphQL engine uses the
+<a href="https://github.com/apollographql/subscriptions-transport-ws/blob/master/PROTOCOL.md">GraphQL over WebSocket Protocol</a>
+by the
+<a href="https://github.com/apollographql/subscriptions-transport-ws">apollographql/subscriptions-transport-ws</a>
+library and the
+<a href="https://github.com/enisdenjo/graphql-ws/blob/master/PROTOCOL.md">GraphQL over WebSocket Protocol</a>
+by the <a href="https://github.com/enisdenjo/graphql-ws">graphql-ws</a> library for
+sending and receiving events. The GraphQL engine uses the
+<code>Sec-WebSocket-Protocol</code> header to determine the communication protocol
+that'll be used. By default, the GraphQL engine will use the
+<code>apollographql/subscriptions-transport-ws</code> protocol.</p></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+                <p>namespace</p>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script>
+            var base_url = "..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../js/base.js" defer></script>
+        <script src="../search/main.js" defer></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>
