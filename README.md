@@ -10,7 +10,7 @@ Customize html in [main.html](custom_theme/main.html). Note we add more recent v
 
 Build with `mkdocs build`.
 
-Deploy to GitHub pages with `mkdocs gh_pages`.
+Deploy to GitHub pages https://SummaryDev.github.io/documentation with `mkdocs gh-deploy`.
 
 Build and deploy to nginx in K8S cluster by `kubectl cp` with [deploy.sh](deploy.sh).
 
