@@ -2,7 +2,7 @@
 
 export namespace=${namespace-dev}
 
-env | grep 'namespace\|sha_short'
+env | grep 'namespace\|sha_short\|domain'
 
 export copyright="$namespace $sha_short"
 
@@ -13,4 +13,4 @@ kubectl cp --namespace $namespace site data-nginx:/data/docs
 
 kubectl exec --namespace $namespace -it data-nginx -- ls -la data/docs
 
-echo "https://$namespace.summary.dev/docs"
+echo "https://$subdomain$domain/docs"
