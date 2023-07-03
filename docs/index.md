@@ -16,12 +16,12 @@ network and have its data indexed from both the main and test chains.
 The data is synced up to the latest block available from the network's
 API.
 
-You can query the data via GraphQL and SQL in our
-[web console](../../console).
+You can query the data via GraphQL in our
+[web console](../../starknet-all.html).
 
 ## Quick start 
 
-[Developer console](../../console) is open to query blockchain data for
+[Developer console](../../starknet-all.html) is open to query blockchain data for
 events, transactions and their inputs, as well as to
 [filter](queries.md#filter), aggregate and
 [sum up](queries.md#aggregation) values.
@@ -29,12 +29,11 @@ events, transactions and their inputs, as well as to
 ![Screenshot-graphiql](img/Screenshot-graphiql.png "GraphQL console")
 
 Try this sample **GraphQL** in the middle pane editor. It queries for
-the latest block numbers and their hashes in both StarkNet chains
-*mainnet* and *goerli*.
+the latest block numbers and their hashes in StarkNet *mainnet* and test
+chains *goerli* and *testnet2*.
 
 ```graphql
 query latest_blocks {
-    starknet_goerli_block(limit: 1, order_by: {block_number: desc}) {block_number block_hash} 
     starknet_mainnet_block(limit: 1, order_by: {block_number: desc}) {block_number block_hash}
 }
 ```
